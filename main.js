@@ -21,7 +21,15 @@
       req.open('GET', 'https://api.flickr.com/services/rest/?' + util.objToQueryString(opts));
       req.onload = function() {
         if (req.status == 200) {
-          resolve(req.response);
+          // beacause Flickr is return jsonFlickrApi([data])
+          var data = req.response.slice('jsonFlickrApi('.length, req.response.length - 1);
+          try {
+            data = JSON.parse(data);
+            resolve(data);
+          } catch (e) {
+            console.error(e);
+            resolve({});
+          }
         } else {
           reject(Error(req.statusText));
         }
@@ -37,7 +45,26 @@
     var page = 1;
     var self = this;
 
-    var renderPicture = function(opts) {
+
+    // initialize
+    sendAPIrequest({
+      method: 'flickr.people.getPublicPhotos',
+      api_key: API_KEY,
+      user_id: userId,
+      format: 'json',
+      per_page: 50
+    }).then(function(resp) {
+      var photos = resp.photos.photo;
+      photos.forEach(function(el, index) {
+        el.index = (index + 1);
+        container.appendChild(renderPicture(el));
+      });
+      loadPictures();
+    }, function() {
+      console.log(arguments);
+    });
+
+    function renderPicture(opts) {
       var element = document.createElement('div');
       element.classList.add('showContainer__photo');
       element.setAttribute('tabindex', opts.index);
@@ -50,22 +77,16 @@
       element.setAttribute('data-id', opts.id);
       element.classList.add('showContainer__photo_loading');
       return element;
-    };
+    }
 
-    var loadPictures = function() {
+    function loadPictures() {
       [].forEach.call(container.querySelectorAll('.showContainer__photo_loading'), function(el) {
         sendAPIrequest({
           method: 'flickr.photos.getSizes',
           api_key: API_KEY,
           photo_id: el.getAttribute('data-id'),
           format: 'json',
-        }).then(function(resp) {
-          var data = resp.slice('jsonFlickrApi('.length, resp.length - 1);
-          try {
-            data = JSON.parse(data);
-          } catch (e) {
-            console.log(e);
-          }
+        }).then(function(data) {
           var mediumPic = data.sizes.size.find(function(pic) {
             return pic.height >= 320 && pic.height >= 222;
           });
@@ -74,44 +95,10 @@
           el.innerHTML = '';
           el.classList.remove('showContainer__photo_loading');
           el.appendChild(pic);
-
-          // if (initialLoad) {
-          //   mediumPic.isActive = true;
-          //   initialLoad = false;
-          // }
-          // mediumPic.index = index;
-          // el.innerHTML = '';
-          // el.appendChild(renderPicture(mediumPic));
         });
       });
-    };
+    }
 
-    // initialize
-    // (function() {
-    sendAPIrequest({
-      method: 'flickr.people.getPublicPhotos',
-      api_key: API_KEY,
-      user_id: userId,
-      format: 'json',
-      per_page: 50
-    }).then(function(resp) {
-      var initialLoad = true;
-      // beacause Flickr is return jsonFlickrApi([data])
-      var jsonFlickrApi = function(data) {
-        var photos = data.photos.photo;
-        photos.forEach(function(el, index) {
-          el.index = (index + 1);
-          container.appendChild(renderPicture(el));
-        });
-        loadPictures();
-      };
-      // not the best solution because eval() can be dangerous, but the shortest
-      // other way: remove jsonFlickrApi() from string response, and parse using JSON.parse()
-      eval(resp);
-    }, function() {
-      console.log(arguments);
-    });
-    // })();
 
     self.nextPage = function() {
 
@@ -123,6 +110,39 @@
       var newOne = container.querySelector('.showContainer__photo[tabindex="' + (Number(index) + 5) + '"]');
       if (newOne) {
         newOne.focus();
+      } else {
+        sendAPIrequest({
+          method: 'flickr.people.getPublicPhotos',
+          api_key: API_KEY,
+          user_id: userId,
+          format: 'json',
+          per_page: 40,
+          page: ++page
+        }).then(function(resp){
+          var photos = resp.photos.photo;
+          photos.forEach(function(el, index) {
+            el.index = (index + 1);
+            container.appendChild(renderPicture(el));
+          });
+          var numberToDelete = 0;
+          while (container.childNodes.length > 50) {
+            container.removeChild(container.childNodes[0]);
+            numberToDelete++;
+          }
+          var currMargin = container.style.margin.match(/(d+)px/g); 
+          console.log('currMargin ' , currMargin);
+          if (!currMargin) {
+            var offset = Math.floor(numberToDelete / 5);
+            offset *= container.childNodes[0].offsetHeight;
+            container.style.margin = offset + 'px' + ' auto 0 auto';
+          }
+          // container.style.margin
+          if (current) {
+            current.focus();
+          }
+          console.log(current);
+          loadPictures();
+        });
       }
     };
 
@@ -130,10 +150,12 @@
       var current = container.querySelector('.showContainer__photo:focus');
       var index = current.getAttribute('tabindex');
       var selector = '.showContainer__photo[tabindex="' + (Number(index) - 5) + '"]';
-      console.log('selector ' , selector);
+      console.log('selector ', selector);
       var newOne = container.querySelector(selector);
       if (newOne) {
         newOne.focus();
+      } else {
+       
       }
     };
 
