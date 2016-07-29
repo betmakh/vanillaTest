@@ -1,6 +1,57 @@
-#showContainer {
+.showContainer {
+  display: block;
+  width: 1024px;
+  height: 768px;
+  margin: auto;
+  overflow: hidden;
+}
+
+.showContainer__photo {
+  display: block;
+  float: left;
+  margin: 10px 0;
+  box-sizing: border-box;
+  width: 20%;
+  height: 300px; 
+  overflow: hidden;
+	border: 5px solid transparent;
+  transition: border-color .3s ease;
+  position: relative;
+}
+
+.showContainer__photo_loading {
+	
+}
+
+.showContainer__photo_loading:after {
+	content: 'Loading...';
+	position: absolute;
+	top:50%;
+	left: 50%;
 	display: block;
-	width: 1024px;
-	height: 768px;
-	margin: auto;
+}
+
+.showContainer__photo:focus {
+	border-color: cyan;
+}
+
+.clearfix:after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+.clearfix {
+  display: inline-block;
+}
+
+* html .clearfix {
+  height: 1%;
+}
+
+.clearfix {
+  display: block;
 }
