@@ -120,7 +120,7 @@
     var moveDown = function() {
       var current = container.querySelector('.showContainer__photo:focus');
       var index = current.getAttribute('tabindex');
-      var newOne = container.querySelector('.showContainer__photo[tabindex="' + (Number(index) + 5) + ']');
+      var newOne = container.querySelector('.showContainer__photo[tabindex="' + (Number(index) + 5) + '"]');
       if (newOne) {
         newOne.focus();
       }
@@ -129,7 +129,9 @@
     var moveUp = function() {
       var current = container.querySelector('.showContainer__photo:focus');
       var index = current.getAttribute('tabindex');
-      var newOne = container.querySelector('.showContainer__photo[tabindex="' + (Number(index) - 5) + ']');
+      var selector = '.showContainer__photo[tabindex="' + (Number(index) - 5) + '"]';
+      console.log('selector ' , selector);
+      var newOne = container.querySelector(selector);
       if (newOne) {
         newOne.focus();
       }
@@ -154,7 +156,7 @@
 
 
     self.moveFocus = function(e) {
-      console.log('e ', e);
+      // console.log('e ', e);
       switch (e.keyCode) {
         case 40:
           moveDown();
@@ -164,6 +166,7 @@
           break;
         case 38:
           console.log('up');
+          moveUp();
           break;
         case 37:
           moveLeft();
@@ -177,7 +180,7 @@
   var photoView = new PhotoView(document.querySelector('#showContainer'));
 
   document.onkeydown = function(e) {
-    console.log('e ', e);
+    // console.log('e ', e);
     // e.preventDefault();
     // log
     photoView.moveFocus(e);
